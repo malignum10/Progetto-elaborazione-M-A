@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progettazione Database | Manuel & Antonio</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <style>
+        /* === CSS: IL DESIGN DEL SITO === */
+        :root {
+            --bg-color: #0a0a0a;
+            --surface-color: #1a1a1a;
+            --text-main: #f0f0f0;
+            --text-muted: #a0a0a0;
+            --accent: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+html { 
+            scroll-behavior: smooth; 
+            scroll-padding-top: 160px; /* Evita che il menu copra i titoli quando clicchi sui link */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Navigazione Sticky - Logo Centrale */
+        nav {
+            position: fixed;
+            top: 0; width: 100%;
+            background-color: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column; /* Impila il logo sopra e il menu sotto */
+            justify-content: center;
+            align-items: center;
+            padding: 15px 50px 10px;
+            z-index: 1000;
+            border-bottom: 1px solid #333;
+            gap: 15px; /* Spazio tra il logo e le scritte */
+        }
+
+        .logo-container img {
+            height: 90px; /* Logo quasi grande il doppio! */
+            width: auto;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container img:hover {
+            transform: scale(1.05); /* Leggero effetto zoom quando ci passi sopra col mouse */
+        }
+
+        nav ul { list-style: none; display: flex; gap: 40px; }
+        nav a { color: var(--text-main); text-decoration: none; font-weight: 600; font-size: 1rem; transition: color 0.3s; }
+        nav a:hover { color: var(--accent); }
+
+        /* Hero Section (Con video muto in background) */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* Video Muto in background - Puoi cambiarlo con un tuo file mp4 */
+        .hero video {
+            position: absolute;
+            top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            opacity: 0.3; /* Leggermente oscurato per leggere il testo */
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; letter-spacing: -1px; }
+        .hero p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--accent);
+            color: #000;
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+
+        /* Sezioni Contenuto */
+        section { padding: 100px 10%; }
+        section:nth-child(even) { background-color: var(--surface-color); }
+        
+        h2 { font-size: 2.5rem; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h3 { font-size: 1.5rem; margin: 25px 0 15px; color: #ddd; }
+        p { margin-bottom: 20px; font-size: 1.1rem; color: #ccc; }
+        ul { margin-bottom: 20px; margin-left: 20px; color: #ccc; }
+        li { margin-bottom: 10px; }
+
+        /* Contenitore Immagini per Diagramma E-R */
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(45deg, #222, #333);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            border-radius: 10px;
+            margin: 30px 0;
+            font-style: italic;
+        }
+
+        /* Stile per i blocchi di codice */
+        pre {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin: 20px 0 !important;
+            border: 1px solid #444;
+        }
+
+        footer {
+            text-align: center; padding: 40px;
+            background-color: #050505; color: var(--text-muted);
+            border-top: 1px solid #333;
+        }
+		/* === CSS: PRELOADER === */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--bg-color); /* Stesso nero del sito per fondersi perfettamente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Tiene il video sopra a tutto il resto */
+            transition: opacity 0.8s ease, visibility 0.8s ease; /* Scomparsa super fluida */
+        }
+
+        #preloader video {
+            width: 400px; /* Grandezza del logo, puoi modificarla se serve */
+            max-width: 80%;
+        }
+
+        /* Questa classe farà svanire il preloader */
+        .preloader-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+		/* === CSS: PULSANTE TORNA IN CIMA === */
+        #scrollTopBtn {
+            display: none; /* Nascosto di default */
+            position: fixed;
+            bottom: 30px;
+            right: 30px; /* Posizionato in basso a destra */
+            z-index: 999;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            outline: none;
+            background-color: var(--accent);
+            color: #000;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Lo rende un cerchio perfetto */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        #scrollTopBtn:hover {
+            transform: scale(1.15); /* Effetto zoom al passaggio del mouse */
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+<div id="preloader">
+        <video id="preload-video" autoplay muted playsinline>
+            <source src="logo_incostruzione.mp4" type="video/mp4">
+        </video>
+    </div>
+
+<nav>
+        <div class="logo-container">
+            <a href="#" onclick="location.reload(); return false;">
+                <img src="logo_m&a.png" alt="Manuel & Antonio Logo">
+            </a>
+        </div>
+        <ul>
+            <li><a href="#struttura">Struttura & E-R</a></li>
+            <li><a href="#regole">Regole di Business</a></li>
+            <li><a href="#query">Analisi Dati</a></li>
+            <li><a href="#ottimizzazione">Ottimizzazione</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <video autoplay loop muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-data-center-server-racks-with-flashing-lights-432-large.mp4" type="video/mp4">
+        </video>
+        <div class="hero-content fade-in">
+            <h1>Sistema Gestionale per Rete di Coworking</h1>
+            <p>Progettazione concettuale, logica e fisica di un database relazionale enterprise con logica transazionale in PostgreSQL.</p>
+            <a href="#struttura" class="btn">Esplora il Progetto</a>
+        </div>
+    </header>
+
+    <section id="struttura">
+        <h2>1. Scelte Progettuali e Architettura</h2>
+        <p>Il dominio applicativo richiede la gestione complessa di spazi condivisi. Abbiamo adottato un approccio orientato alla Terza Forma Normale (3NF) per garantire scalabilità e integrità dei dati.</p>
+        
+        <h3>Generalizzazioni Architetturali</h3>
+        <ul>
+            <li><strong>Gerarchia Utente:</strong> Abbiamo utilizzato una strategia a tabelle separate (Utente Singolo vs Corporate) collegate 1:1 alla tabella padre per mappare correttamente gli attributi fiscali.</li>
+            <li><strong>Gestione Privacy Scalabile:</strong> I consensi GDPR non sono booleani sull'utente, ma sono stati modellati come un'entità debole a parte. Questo permette di aggiungere nuovi consensi nel tempo (es. Profilazione, Cessione Terzi) senza alterare lo schema DDL.</li>
+            <li><strong>Storicità della Fatturazione:</strong> La tabella <code>Riga_Fattura</code> contiene il <code>Prezzo_Unitario_Acquisto</code> scollegato dal listino <code>Abbonamento</code>. Questo vincolo accademico è vitale: l'aggiornamento dei prezzi correnti non deve mai alterare i documenti contabili passati.</li>
+        </ul>
+
+<div style="text-align: center; margin: 30px 0;">
+    <img src="diagramma_er.png" alt="Diagramma Entità Relazione" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+</div>
+    </section>
+
+    <section id="regole">
+        <h2>2. Implementazione Regole di Business</h2>
+        <p>Per garantire la robustezza del sistema, la logica non è stata delegata al backend applicativo, ma implementata direttamente a livello di database tramite <strong>Trigger, Funzioni e Procedure Transazionali</strong>.</p>
+        
+        <h3>Controllo Conflitto Prenotazioni</h3>
+        <p>Un Trigger <code>BEFORE INSERT/UPDATE</code> impedisce la sovrapposizione temporale di due prenotazioni distinte sulla medesima risorsa fisica, garantendo l'integrità del calendario.</p>
+        <pre><code class="language-sql">
+CREATE OR REPLACE FUNCTION check_conflitto_prenotazione()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Prenotazione
+        WHERE ID_Risorsa = NEW.ID_Risorsa
+          AND Stato IN ('Confermata', 'In_Corso')
+          AND ID_Prenotazione <> NEW.ID_Prenotazione
+          AND NEW.Timestamp_Inizio < Timestamp_Fine 
+          AND NEW.Timestamp_Fine > Timestamp_Inizio
+    ) THEN
+        RAISE EXCEPTION 'Errore: Risorsa già prenotata nell''intervallo richiesto.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+        </code></pre>
+
+        <h3>Scalo Automatico Carnet (Transazione ACID)</h3>
+        <p>Lo scalo delle ore da un carnet aziendale richiede sicurezza concorrenziale. Abbiamo utilizzato una Stored Procedure con un lock di riga (<code>FOR UPDATE</code>) per prevenire race conditions e garantire un <code>ROLLBACK</code> in caso di errore.</p>
+    </section>
+
+    <section id="query">
+        <h2>3. Data Analysis & Reportistica</h2>
+        <p>Abbiamo sviluppato query complesse utilizzando costrutti avanzati come `JOIN` multipli, sub-query correlate e Window Functions per estrarre KPI strategici aziendali.</p>
+
+        <h3>Identificazione Churn Rate (Rischio Abbandono)</h3>
+        <p>Identifica gli utenti con abbonamento in scadenza che non hanno effettuato check-in recenti, utilizzando sub-query di esclusione (<code>NOT EXISTS</code>) e algebra delle date.</p>
+        <pre><code class="language-sql">
+SELECT 
+    u.Nome, u.Cognome, u.Email, sub.Data_Fine AS Scadenza
+FROM Utente u
+JOIN Sottoscrizione sub ON u.ID_Utente = sub.ID_Utente
+WHERE sub.Stato = 'Attivo'
+  AND sub.Data_Fine BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')
+  AND NOT EXISTS (
+      SELECT 1 FROM Accesso a 
+      WHERE a.ID_Utente = u.ID_Utente 
+        AND a.Timestamp_Ingresso >= (CURRENT_DATE - INTERVAL '15 days')
+  );
+        </code></pre>
+
+        <h3>Fatturato Cumulativo tramite Window Functions</h3>
+        <p>Genera un report finanziario progressivo calcolando la somma mese su mese (Rolling Sum) tramite la clausola <code>OVER (ORDER BY)</code>.</p>
+        <pre><code class="language-sql">
+SELECT 
+    TO_CHAR(Data_Emissione, 'YYYY-MM') AS Mese,
+    SUM(Totale) AS Fatturato_Mese,
+    SUM(SUM(Totale)) OVER (ORDER BY TO_CHAR(Data_Emissione, 'YYYY-MM')) AS Cumulativo
+FROM Fattura
+WHERE Stato_Pagamento = 'Pagata'
+GROUP BY TO_CHAR(Data_Emissione, 'YYYY-MM');
+        </code></pre>
+    </section>
+
+    <section id="ottimizzazione">
+        <h2>4. Ottimizzazione delle Prestazioni (Indexing)</h2>
+        <p>Per simulare un ambiente Enterprise ad alto carico, abbiamo analizzato i piani di esecuzione (Explain Plan) e creato indici specifici, evitando l'over-indexing che avrebbe rallentato le operazioni di <code>INSERT</code>.</p>
+        <ul>
+            <li><strong>Chiavi Esterne (FK):</strong> PostgreSQL non indicizza automaticamente le FK. Abbiamo indicizzato <code>ID_Risorsa</code> e <code>ID_Utente</code> per ottimizzare i <code>JOIN</code> ricorsivi.</li>
+            <li><strong>Indici Compositi Temporali:</strong> L'indice su <code>(Timestamp_Inizio, Timestamp_Fine)</code> è stato cruciale per abbattere il costo computazionale del Trigger anticonflitto.</li>
+        </ul>
+        <pre><code class="language-sql">
+-- Esempio di Indici Strategici
+CREATE INDEX idx_prenotazione_risorsa ON Prenotazione(ID_Risorsa);
+CREATE INDEX idx_prenotazione_date ON Prenotazione(Timestamp_Inizio, Timestamp_Fine);
+CREATE INDEX idx_sottoscrizione_stato ON Sottoscrizione(Stato);
+        </code></pre>
+    </section>
+
+    <footer>
+        <p><strong>Manuel & Antonio - Data Engineering & Data Processing</strong></p>
+        <p>Progetto accademico di Progettazione Basi di Dati | Anno Accademico 2025/2026</p>
+    </footer>
+<button id="scrollTopBtn" title="Torna in cima">&#8593;</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script>
+        // 0. Forza il browser a ricaricare SEMPRE dalla cima della pagina
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        window.scrollTo(0, 0);
+
+        // Effetto di comparsa fluida del testo nella Hero section
+        document.addEventListener("DOMContentLoaded", () => {
+            const heroContent = document.querySelector('.hero-content');
+            heroContent.style.opacity = 0;
+            heroContent.style.transform = 'translateY(20px)';
+            heroContent.style.transition = 'opacity 1s ease, transform 1s ease';
+            
+            setTimeout(() => {
+                heroContent.style.opacity = 1;
+                heroContent.style.transform = 'translateY(0)';
+            }, 300);
+
+// --- LOGICA PRELOADER E BLOCCO SCROLL ---
+            const preloader = document.getElementById('preloader');
+            const preloadVideo = document.getElementById('preload-video');
+
+            // 1. Blocca lo scorrimento della pagina sempre, fin dall'inizio
+            document.body.style.overflow = 'hidden';
+
+            // 2. Quando il video finisce l'animazione, svanisce il preloader MA LO SCROLL RESTA BLOCCATO
+            if (preloadVideo) {
+                preloadVideo.addEventListener('ended', () => {
+                    preloader.classList.add('preloader-hidden');
+                });
+            }
+
+            // Paracadute di sicurezza per far sparire il preloader dopo 3.5 secondi
+            setTimeout(() => {
+                if (preloader && !preloader.classList.contains('preloader-hidden')) {
+                    preloader.classList.add('preloader-hidden');
+                }
+            }, 3500);
+
+            // 3. Sblocca lo scorrimento SOLO quando si clicca sui link del menu o sul bottone "Esplora"
+            const unlockLinks = document.querySelectorAll('nav ul li a, .btn');
+            unlockLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    document.body.style.overflow = 'auto'; // Sblocca e permette di scendere
+                });
+            });
+
+            // --- LOGICA PULSANTE TORNA IN CIMA ---
+            const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+            // Mostra il pulsante solo se si scorre in basso per più di 300 pixel
+            window.addEventListener("scroll", () => {
+                if (window.scrollY > 300) {
+                    scrollTopBtn.style.display = "block";
+                } else {
+                    scrollTopBtn.style.display = "none";
+                }
+            });
+
+            // Quando si clicca, torna su in modo fluido
+            scrollTopBtn.addEventListener("click", () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
