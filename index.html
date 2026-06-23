@@ -309,7 +309,9 @@ html {
         <ul>
             <li><strong>Gerarchia Utente:</strong> Abbiamo utilizzato una strategia a tabelle separate (Utente Singolo vs Corporate) collegate 1:1 alla tabella padre per mappare correttamente gli attributi fiscali.</li>
             <li><strong>Gestione Privacy Scalabile:</strong> I consensi GDPR non sono booleani sull'utente, ma sono stati modellati come un'entità debole a parte. Questo permette di aggiungere nuovi consensi nel tempo (es. Profilazione, Cessione Terzi) senza alterare lo schema DDL.</li>
-            <li><strong>Storicità della Fatturazione:</strong> La tabella <code>Riga_Fattura</code> contiene il <code>Prezzo_Unitario_Acquisto</code> scollegato dal listino <code>Abbonamento</code>. Questo vincolo accademico è vitale: l'aggiornamento dei prezzi correnti non deve mai alterare i documenti contabili passati.</li>
+ <li><strong>Storicità della Fatturazione:</strong> La tabella <code>Riga_Fattura</code> contiene il <code>Prezzo_Unitario_Acquisto</code> scollegato dal listino <code>Abbonamento</code>. Questo vincolo accademico è vitale: l'aggiornamento dei prezzi correnti non deve mai alterare i documenti contabili passati.</li>
+            <li><strong>Modellazione Eventi e Servizi Extra:</strong> L'ecosistema è stato espanso con entità per gestire Eventi (con calcolo biglietti e capienza) e Servizi Extra (es. catering), integrati nativamente nel motore di fatturazione.</li>
+        </ul>
         </ul>
 
 <div style="text-align: center; margin: 30px 0;">
@@ -342,8 +344,14 @@ END;
 $$ LANGUAGE plpgsql;
         </code></pre>
 
-        <h3>Scalo Automatico Carnet (Transazione ACID)</h3>
+<h3>Scalo Automatico Carnet (Transazione ACID)</h3>
         <p>Lo scalo delle ore da un carnet aziendale richiede sicurezza concorrenziale. Abbiamo utilizzato una Stored Procedure con un lock di riga (<code>FOR UPDATE</code>) per prevenire race conditions e garantire un <code>ROLLBACK</code> in caso di errore.</p>
+
+        <h3>Controllo Accessi Fisico (Tornello Virtuale)</h3>
+        <p>Il check-in fisico in sede è rigorosamente vincolato: un Trigger autorizza l'ingresso (apertura del tornello) solo se il sistema rileva un abbonamento valido per la giornata odierna o una prenotazione confermata con una tolleranza massima di 30 minuti di anticipo.</p>
+
+        <h3>Automazione Rilascio Risorse (No-Show)</h3>
+        <p>Una funzione batch dedicata si occupa di scansionare le prenotazioni confermate: se l'utente non effettua il log fisico di check-in (tabella <code>Accesso</code>) entro 15 minuti dall'orario di inizio pattuito, lo stato della prenotazione passa automaticamente a "No-Show" liberando la risorsa e applicando il <code>Flag_Penale</code>.</p>
     </section>
 
     <section id="query">
@@ -377,6 +385,22 @@ FROM Fattura
 WHERE Stato_Pagamento = 'Pagata'
 GROUP BY TO_CHAR(Data_Emissione, 'YYYY-MM');
         </code></pre>
+
+        <h3>Analisi Successo Eventi e Tasso di Riempimento (Fill Rate)</h3>
+        <p>Questa query analitica calcola le performance degli eventi organizzati nelle sale, aggregando i partecipanti extra ed estraendo il tasso di riempimento percentuale (Fill Rate) in base alla capienza massima e i ricavi totali generati dai biglietti.</p>
+        <pre><code class="language-sql">
+SELECT 
+    e.Titolo AS Nome_Evento,
+    r.Nome_Identificativo AS Sala,
+    COUNT(pe.ID_Partecipante) AS Numero_Partecipanti,
+    ROUND((COUNT(pe.ID_Partecipante)::numeric / e.Max_Partecipanti) * 100, 2) AS Tasso_Riempimento_Perc,
+    (COUNT(pe.ID_Partecipante) * e.Costo_Biglietto) AS Ricavo_Totale_Biglietti
+FROM Evento e
+JOIN Risorsa r ON e.ID_Risorsa = r.ID_Risorsa
+LEFT JOIN Partecipante_Extra pe ON e.ID_Evento = pe.ID_Evento
+GROUP BY e.ID_Evento, e.Titolo, r.Nome_Identificativo, e.Max_Partecipanti, e.Costo_Biglietto
+ORDER BY Tasso_Riempimento_Perc DESC;
+        </code></pre>
     </section>
 
     <section id="ottimizzazione">
@@ -396,7 +420,7 @@ CREATE INDEX idx_sottoscrizione_stato ON Sottoscrizione(Stato);
 
     <footer>
         <p><strong>Manuel & Antonio - Data Engineering & Data Processing</strong></p>
-        <p>Progetto accademico di Progettazione Basi di Dati | Anno Accademico 2025/2026</p>
+        <p>Progetto di Elaborazione Dati | Anno Accademico 2025/2026</p>
     </footer>
 <button id="scrollTopBtn" title="Torna in cima">&#8593;</button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
